@@ -61,6 +61,7 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [selectedSupplyId, setSelectedSupplyId] = useState('');
     const [supplies, setSupplies] = useState([]);
+    const [purchaseQty, setPurchaseQty] = useState(''); // New state for stock add
 
     useEffect(() => {
         if (isOpen) {
@@ -70,6 +71,7 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
                 // Load supplies for expenses
                 api.supplies.list().then(setSupplies).catch(console.error);
             }
+            setPurchaseQty(''); // Reset qty
         }
     }, [isOpen, type]);
 
@@ -77,25 +79,7 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            // If it's an expense and a supply is selected, check/update price
-            if (type === 'GASTO' && selectedSupplyId) {
-                // Update supply price if needed (logic can be more complex, e.g., if unit price changed)
-                // For MVP, if user inputs a total amount, we assume it updates the cost reference or tracking?
-                // Actually, often we buy X units. 
-                // Let's keep it simple: We just log the expense. 
-                // OPTIONAL: Update the supply's current cost if the user indicates a price change. 
-                // For now, let's just create the transaction properly.
-
-                // If we want to track price history, we should probably update the supply here 
-                // But usually Total Expense != Unit Price. 
-                // Let's just Link it for now.
-
-                // However, user ASKED for "analysis of price variation".
-                // So maybe we should ask: "Unit Price?"
-
-                // Let's defer strict price update to a dedicated flow or assume "Amount" is total.
-            }
-
+            // 1. Create Transaction
             await api.transactions.create({
                 type,
                 amount: Number(amount),
@@ -105,19 +89,17 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
                 payment_method: 'Efectivo',
             });
 
-            // If expense linked to supply, TRY to detect unit price? 
-            // Better simpler: Just linking it allows us to filter expenses by supply later and see "Total spent on Harina".
-            // To track "Price Variation" (Unit cost), we need to know Quantity bought.
-            // That's too complex for this FAB?
-
-            // Alternative: Just update the "Last Known Price" if provided?
-            // Let's stick to the user request: "analice la variación de precios".
-            // Implementation: We will just save the expense.
+            // 2. If Expense + Supply + Qty > 0 -> ADD TO STOCK
+            if (type === 'GASTO' && selectedSupplyId && Number(purchaseQty) > 0) {
+                await api.supplies.updateStock(selectedSupplyId, Number(purchaseQty));
+                // Optional: Could update average cost here too, but let's keep it simple.
+            }
 
             setAmount('');
             setDescription('');
             setClientId('');
             setSelectedSupplyId('');
+            setPurchaseQty('');
             onSuccess();
         } catch (err) {
             console.error(err);
@@ -225,9 +207,30 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
 
                 {/* Checkbox to update price? Only if supply selected */}
                 {type === 'GASTO' && selectedSupplyId && (
-                    <div className="bg-yellow-50 p-3 rounded-lg text-xs text-yellow-800 flex items-start">
-                        <span className="mr-2">💡</span>
-                        <p>Para registrar un cambio de precio unitario, ve a la sección de <b>Insumos</b>.</p>
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-3">
+                        <div className="flex items-start gap-2">
+                            <span className="text-xl">📦</span>
+                            <div className="flex-1">
+                                <label className="block text-sm font-bold text-blue-900 mb-1">
+                                    ¿Entró inventario de este insumo?
+                                </label>
+                                <p className="text-xs text-blue-700 mb-2">
+                                    Si agregas cantidad aquí, se sumará automáticamente a tus Insumos.
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        className="w-24 p-2 text-center font-bold border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="0"
+                                        value={purchaseQty}
+                                        onChange={(e) => setPurchaseQty(e.target.value)}
+                                    />
+                                    <span className="text-sm font-bold text-gray-500">
+                                        {supplies.find(s => s.id === selectedSupplyId)?.unit || 'unid'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
