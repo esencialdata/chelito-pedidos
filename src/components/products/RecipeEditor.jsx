@@ -134,6 +134,13 @@ const RecipeEditor = ({ isOpen, onClose, product, onSave }) => {
                     </div>
                 </div>
 
+                {ingredients.length > 0 && batchSize === 1 && (
+                    <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
+                        <AlertCircle size={14} />
+                        <span>Visualizando cantidades unitarias (por 1 pieza). Aumenta el rendimiento para calcular lotes.</span>
+                    </div>
+                )}
+
                 {/* Ingredients List */}
                 <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
                     {ingredients.map((ing, idx) => (
@@ -152,7 +159,9 @@ const RecipeEditor = ({ isOpen, onClose, product, onSave }) => {
                                 </select>
                             </div>
                             <div className="w-24">
-                                <label className="text-xs font-bold text-gray-500 mb-1 block">Cant. Lote</label>
+                                <label className="text-xs font-bold text-gray-500 mb-1 block">
+                                    {batchSize > 1 ? 'Cant. Lote' : 'Cant. Unitaria'}
+                                </label>
                                 <div className="relative">
                                     <input
                                         type="number"
@@ -163,6 +172,11 @@ const RecipeEditor = ({ isOpen, onClose, product, onSave }) => {
                                     />
                                     <span className="absolute right-2 top-2 text-xs text-gray-400">{ing.unit}</span>
                                 </div>
+                                {batchSize > 1 && (
+                                    <p className="text-[10px] text-gray-400 mt-1 text-center">
+                                        = {(Number(ing.quantity) / batchSize).toFixed(4)} / pza
+                                    </p>
+                                )}
                             </div>
                             <button
                                 onClick={() => removeIngredient(idx)}
