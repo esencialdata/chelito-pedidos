@@ -6,11 +6,11 @@ create table customers (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
   phone text,
-  category text check (category in ('VIP', 'Nuevo', 'Ocasional', 'Corporativo')),
+  zone text, -- Norte, Sur, etc.
+  category text default 'Nuevo', -- Nuevo, Frecuente, VIP
   favorite_product text,
-  total_purchased numeric default 0,
-  zone text check (zone in ('Centro', 'Norte', 'Sur', 'Este', 'Oeste', 'Sin Zona')),
   total_orders integer default 0,
+  total_purchased numeric(10,2) default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
