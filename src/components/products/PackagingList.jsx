@@ -169,21 +169,27 @@ const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
             } else {
                 // Create
                 const newItem = await api.packaging.create(payload);
+
                 if (registerExpense && Number(cost) > 0 && Number(quantity) > 0) {
-                    await api.transactions.create({
-                        type: 'GASTO',
-                        amount: Number(quantity) * Number(cost),
-                        description: `Compra Inicial Empaques: ${type}`,
-                        date: new Date().toISOString(),
-                        payment_method: 'Efectivo'
-                    });
+                    try {
+                        await api.transactions.create({
+                            type: 'GASTO',
+                            amount: Number(quantity) * Number(cost),
+                            description: `Compra Inicial Empaques: ${type}`,
+                            date: new Date().toISOString(),
+                            payment_method: 'Efectivo'
+                        });
+                    } catch (txError) {
+                        console.error('Error creating expense transaction:', txError);
+                        alert(`Empaque guardado, pero falló el registro del gasto: ${txError.message}`);
+                    }
                 }
             }
             onSaved();
             onClose();
         } catch (e) {
             console.error(e);
-            alert("Error al guardar");
+            alert(`Error al guardar: ${e.message || 'Desconocido'}`);
         }
     };
 
