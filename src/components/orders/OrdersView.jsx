@@ -74,26 +74,90 @@ const OrdersView = () => {
         }
     };
 
-    const [showProductionModal, setShowProductionModal] = useState(false);
-    const [productionData, setProductionData] = useState([]);
+    const [productionPlan, setProductionPlan] = useState(null);
+    const [calculating, setCalculating] = useState(false);
 
-    const handleOpenProduction = () => {
-        const summary = {};
-        todayOrders.forEach(order => {
-            const items = Array.isArray(order.items) ? order.items : (JSON.parse(order.items || '[]'));
-            items.forEach(item => {
-                const name = item.product || item.name; // Fallback
-                summary[name] = (summary[name] || 0) + Number(item.quantity);
-            });
-        });
-
-        // Convert to array
-        const list = Object.entries(summary).map(([name, total]) => ({ name, total }));
-        setProductionData(list);
+    const handleOpenProduction = async () => {
         setShowProductionModal(true);
+        setCalculating(true);
+        setProductionPlan(null);
+
+        try {
+            // 1. Summarize Products to Bake
+            const summary = {};
+            const itemsToProcess = [];
+
+            todayOrders.forEach(order => {
+                const items = Array.isArray(order.items) ? order.items : (JSON.parse(order.items || '[]'));
+                items.forEach(item => {
+                    const name = item.product || item.name;
+                    summary[name] = (summary[name] || 0) + Number(item.quantity);
+                    itemsToProcess.push({ name, quantity: Number(item.quantity) });
+                });
+            });
+
+            // Production List for UI
+            const productList = Object.entries(summary).map(([name, total]) => ({ name, total }));
+
+            // 2. Calculate Ingredients
+            // We need product IDs to fetch recipes. Let's fetch all products first.
+            const allProducts = await api.products.list();
+            const allSupplies = await api.supplies.list();
+
+            const ingredientTotals = {}; // { supplyId: { name, unit, required, stock } }
+
+            for (const item of itemsToProcess) {
+                // Find product by name (heuristic)
+                const product = allProducts.find(p => p.name === item.name);
+                if (product) {
+                    const recipe = await api.recipes.getByProduct(product.id);
+                    recipe.forEach(rItem => {
+                        const supplyId = rItem.supply.id;
+                        const requiredAmount = Number(rItem.quantity) * item.quantity;
+
+                        if (!ingredientTotals[supplyId]) {
+                            const supply = allSupplies.find(s => s.id === supplyId);
+                            ingredientTotals[supplyId] = {
+                                name: rItem.supply.name,
+                                unit: rItem.unit,
+                                required: 0,
+                                stock: supply ? Number(supply.current_stock) : 0
+                            };
+                        }
+                        ingredientTotals[supplyId].required += requiredAmount;
+                    });
+                }
+            }
+
+            // Convert to array and determine status
+            const ingredients = Object.values(ingredientTotals).map(i => ({
+                ...i,
+                missing: Math.max(0, i.required - i.stock),
+                status: (i.required - i.stock) > 0 ? 'shortage' : 'ok'
+            }));
+
+            setProductionPlan({ products: productList, ingredients });
+
+        } catch (e) {
+            console.error(e);
+            alert("Error calculando producción");
+        } finally {
+            setCalculating(false);
+        }
     };
 
-    if (loading) return <div className="p-8 text-center animate-pulse">Cargando agenda...</div>;
+    const copyMissing = () => {
+        if (!productionPlan) return;
+        const shortages = productionPlan.ingredients.filter(i => i.missing > 0);
+        if (shortages.length === 0) return alert('¡Tienes todo lo necesario! 👨‍🍳');
+
+        let text = `🛒 *Faltantes para Hoy* (Generado por CDM)\n\n`;
+        shortages.forEach(item => {
+            text += `[ ] ${item.missing.toFixed(2)} ${item.unit} de ${item.name}\n`;
+        });
+        navigator.clipboard.writeText(text);
+        alert('Lista de faltantes copiada');
+    };
 
     return (
         <div className="space-y-6 mb-24 max-w-7xl mx-auto">
@@ -121,8 +185,8 @@ const OrdersView = () => {
 
             {/* Production Modal */}
             {showProductionModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowProductionModal(false)}>
-                    <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowProductionModal(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 my-8" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold text-gray-900">Producción de Hoy</h3>
                             <button onClick={() => setShowProductionModal(false)} className="text-gray-400 hover:text-gray-600">
@@ -130,22 +194,84 @@ const OrdersView = () => {
                             </button>
                         </div>
 
-                        {productionData.length === 0 ? (
-                            <p className="text-center text-gray-500 py-8">No hay pedidos para hoy.</p>
+                        {calculating ? (
+                            <div className="py-12 text-center text-gray-500 animate-pulse">
+                                Calculando explosión de insumos...
+                            </div>
                         ) : (
-                            <ul className="space-y-4">
-                                {productionData.map((item, idx) => (
-                                    <li key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                        <span className="text-gray-700 font-medium text-lg">{item.name}</span>
-                                        <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg font-black text-xl">
-                                            {item.total}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <>
+                                {(!productionPlan || productionPlan.products.length === 0) ? (
+                                    <p className="text-center text-gray-500 py-8">No hay pedidos para hoy.</p>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {/* Products List */}
+                                        <div className="space-y-2">
+                                            <h4 className="font-bold text-gray-700 uppercase text-xs tracking-wider">A Hornear</h4>
+                                            <ul className="grid grid-cols-2 gap-2">
+                                                {productionPlan.products.map((item, idx) => (
+                                                    <li key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                        <span className="text-gray-700 font-medium">{item.name}</span>
+                                                        <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg font-black">
+                                                            {item.total}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        <hr className="border-gray-100" />
+
+                                        {/* Ingredients List */}
+                                        <div>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="font-bold text-gray-700 uppercase text-xs tracking-wider">Insumos Requeridos</h4>
+                                                <button
+                                                    onClick={copyMissing}
+                                                    className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 flex items-center gap-1 transition-colors"
+                                                >
+                                                    <AlertCircle size={14} /> Copiar Faltantes
+                                                </button>
+                                            </div>
+
+                                            <div className="grid gap-3 max-h-[40vh] overflow-y-auto pr-1">
+                                                {productionPlan.ingredients.length === 0 ? (
+                                                    <div className="text-center py-4 text-gray-400 text-sm">No se requieren insumos (o falta configurar recetas).</div>
+                                                ) : (
+                                                    productionPlan.ingredients.map((item, idx) => (
+                                                        <div key={idx} className={`p-3 rounded-xl border flex justify-between items-center ${item.status === 'shortage' ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
+                                                            <div>
+                                                                <p className="font-bold text-gray-900">{item.name}</p>
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    Nec: <strong>{Number(item.required).toFixed(2)} {item.unit}</strong> • Stock: {Number(item.stock).toFixed(2)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                {item.status === 'ok' ? (
+                                                                    <div className="text-green-600">
+                                                                        <CheckCircle size={20} className="ml-auto" />
+                                                                        <span className="text-[10px] font-bold uppercase tracking-wider">OK</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-red-600">
+                                                                        <AlertCircle size={20} className="ml-auto" />
+                                                                        <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5 block">Faltan</span>
+                                                                        <span className="font-black text-sm block">
+                                                                            {Number(item.missing).toFixed(2)}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
 
-                        <div className="mt-8 pt-4 border-t border-gray-100">
+                        <div className="mt-6 pt-4 border-t border-gray-100">
                             <button
                                 onClick={() => setShowProductionModal(false)}
                                 className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200"
