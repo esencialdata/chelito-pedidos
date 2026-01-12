@@ -95,6 +95,7 @@ create table recipes (
 create table packaging_inventory (
   id uuid default uuid_generate_v4() primary key,
   type text not null, -- e.g., 'Caja Rosca Grande', 'Bolsa Papel'
+  cost numeric(10,2) default 0, -- Costo unitario
   current_quantity integer default 0,
   min_alert integer default 10,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null

@@ -96,18 +96,24 @@ const PackagingList = () => {
 const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
     const [type, setType] = useState('');
     const [quantity, setQuantity] = useState('');
+    const [cost, setCost] = useState('');
     const [minAlert, setMinAlert] = useState(10);
+    const [registerExpense, setRegisterExpense] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
                 setType(initialData.type);
                 setQuantity(initialData.current_quantity);
+                setCost(initialData.cost || '');
                 setMinAlert(initialData.min_alert);
+                setRegisterExpense(false); // Reset
             } else {
                 setType('');
                 setQuantity('');
+                setCost('');
                 setMinAlert(10);
+                setRegisterExpense(true); // Default to true for new purchases
             }
         }
     }, [isOpen, initialData]);
@@ -117,13 +123,61 @@ const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
             const payload = {
                 type,
                 current_quantity: Number(quantity),
+                cost: Number(cost || 0),
                 min_alert: Number(minAlert)
             };
 
             if (initialData) {
+                // Update
                 await api.packaging.update(initialData.id, payload);
+
+                // Logic: If user specifically wants to register an expense for the ADDED difference?
+                // Or maybe this modal is just for correcting stock? 
+                // Let's assume simplest: If registerExpense is true, we calculate cost * quantity.
+                // UNLESS it's an update, where we might calculate delta? 
+                // User said: "incluye también los empaques... como gastos".
+                // If I just bought 50 boxes at $10 each -> Expense $500.
+                // But here I am setting TOTAL quantity.
+
+                // To keep it simple: If editing, maybe dont force expense unless explicitly asked.
+                // Let's rely on a separate "Adjust Stock" flow like Supplies for clarity?
+                // Or just use this modal for everything for now.
+
+                // If it's a NEW item or specifically checked:
+                if (registerExpense && Number(cost) > 0) {
+                    // Calculate amount. If update, it's ambiguous. 
+                    // Let's confuse less: Only register EXPENSE if adding NEW item or explicit delta.
+                    // Actually, let's keep it simple: If checked, we charge for the FULL quantity entred? No, that deletes previous stock cost.
+                    // The user enters CURRENT quantity.
+
+                    // BETTER APPROACH: Only for CREATE (Purchase) or explicit ADD flow?
+                    // Current UI is "Edit/Adjust".
+
+                    // Let's calculate the delta if update.
+                    const delta = Number(quantity) - Number(initialData.current_quantity);
+                    if (delta > 0) {
+                        // Spending logic
+                        await api.transactions.create({
+                            type: 'GASTO',
+                            amount: delta * Number(cost),
+                            description: `Compra Empaques: ${type} (${delta} pzas)`,
+                            date: new Date().toISOString(),
+                            payment_method: 'Efectivo'
+                        });
+                    }
+                }
             } else {
-                await api.packaging.create(payload);
+                // Create
+                const newItem = await api.packaging.create(payload);
+                if (registerExpense && Number(cost) > 0 && Number(quantity) > 0) {
+                    await api.transactions.create({
+                        type: 'GASTO',
+                        amount: Number(quantity) * Number(cost),
+                        description: `Compra Inicial Empaques: ${type}`,
+                        date: new Date().toISOString(),
+                        payment_method: 'Efectivo'
+                    });
+                }
             }
             onSaved();
             onClose();
@@ -147,7 +201,7 @@ const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Actual</label>
                         <input
                             type="number"
                             className="w-full p-3 rounded-xl border border-gray-200 outline-none"
@@ -156,15 +210,39 @@ const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Alerta Mínimo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Costo Unitario ($)</label>
                         <input
                             type="number"
                             className="w-full p-3 rounded-xl border border-gray-200 outline-none"
-                            value={minAlert}
-                            onChange={e => setMinAlert(e.target.value)}
+                            placeholder="0.00"
+                            value={cost}
+                            onChange={e => setCost(e.target.value)}
                         />
                     </div>
                 </div>
+                <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                    <label className="block text-sm font-medium text-gray-500">Alerta de Mínimo</label>
+                    <input
+                        type="number"
+                        className="w-20 p-2 rounded-lg border border-gray-200 outline-none text-center"
+                        value={minAlert}
+                        onChange={e => setMinAlert(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                    <input
+                        type="checkbox"
+                        id="expenseCheck"
+                        className="w-5 h-5 text-indigo-600 rounded"
+                        checked={registerExpense}
+                        onChange={e => setRegisterExpense(e.target.checked)}
+                    />
+                    <label htmlFor="expenseCheck" className="text-sm text-gray-700 select-none cursor-pointer">
+                        Registrar como Gasto ({initialData ? 'Solo diferencia positiva' : 'Total de compra'})
+                    </label>
+                </div>
+
                 <button
                     onClick={handleSubmit}
                     disabled={!type || !quantity}
