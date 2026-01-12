@@ -83,7 +83,7 @@ const NewOrderModal = ({ isOpen, onClose, onSuccess, initialData }) => {
                 client_id: clientId,
                 delivery_date: deliveryDate,
                 items: items,
-                total: total, // Note: DB field checked previously
+                total_amount: total, // Fix: Match DB column name
                 prepayment: Number(prepayment),
                 notes: notes,
                 status: initialData ? initialData.status : 'PENDIENTE'
