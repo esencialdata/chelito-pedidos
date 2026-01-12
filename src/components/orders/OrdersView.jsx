@@ -1,0 +1,239 @@
+import React, { useEffect, useState } from 'react';
+import { api } from '../../services/api';
+import { Calendar, CheckCircle, Clock, MapPin, Plus, AlertCircle } from 'lucide-react';
+import { format, isToday, isTomorrow, parseISO, isAfter, startOfDay, addDays } from 'date-fns';
+import { es } from 'date-fns/locale';
+import NewOrderModal from './NewOrderModal';
+
+const OrdersView = () => {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const loadOrders = async () => {
+        try {
+            const data = await api.orders.list();
+            setOrders(data.filter(o => o.status === 'PENDIENTE')); // Only show pending
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadOrders();
+    }, []);
+
+    // Categorize Orders
+    const today = new Date();
+
+    const todayOrders = orders.filter(o => isToday(parseISO(o.delivery_date)));
+    const tomorrowOrders = orders.filter(o => isTomorrow(parseISO(o.delivery_date)));
+    const futureOrders = orders.filter(o => {
+        const d = parseISO(o.delivery_date);
+        return !isToday(d) && !isTomorrow(d) && isAfter(d, startOfDay(today));
+    });
+
+    const handleComplete = async (order) => {
+        if (window.confirm(`¿Confirmar entrega a ${order.customers?.name}? Se registrará la venta.`)) {
+            const remaining = Number(order.total_amount) - Number(order.prepayment || 0);
+
+            try {
+                await api.orders.complete(order.id, remaining, {
+                    type: 'VENTA',
+                    amount: remaining,
+                    description: `Entrega Pedido: ${order.customers?.name}`,
+                    client_id: order.client_id,
+                    payment_method: 'Efectivo', // Default
+                    date: new Date().toISOString()
+                });
+                loadOrders(); // Refresh
+            } catch (e) {
+                console.error(e);
+                alert('Error al completar pedido');
+            }
+        }
+    };
+
+    const [showProductionModal, setShowProductionModal] = useState(false);
+    const [productionData, setProductionData] = useState([]);
+
+    const handleOpenProduction = () => {
+        const summary = {};
+        todayOrders.forEach(order => {
+            const items = Array.isArray(order.items) ? order.items : (JSON.parse(order.items || '[]'));
+            items.forEach(item => {
+                const name = item.product || item.name; // Fallback
+                summary[name] = (summary[name] || 0) + Number(item.quantity);
+            });
+        });
+
+        // Convert to array
+        const list = Object.entries(summary).map(([name, total]) => ({ name, total }));
+        setProductionData(list);
+        setShowProductionModal(true);
+    };
+
+    if (loading) return <div className="p-8 text-center animate-pulse">Cargando agenda...</div>;
+
+    return (
+        <div className="space-y-6 mb-24 max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Agenda de Cocina</h2>
+                    <p className="text-gray-500">Tus pedidos y entregas pendientes</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleOpenProduction}
+                        className="bg-white text-gray-700 border border-gray-200 px-4 py-3 rounded-xl font-bold shadow-sm hover:bg-gray-50 transition-colors flex items-center"
+                    >
+                        <Clock size={20} className="mr-2 text-gray-500" />
+                        Ver Producción
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-yellow-600 transition-colors flex items-center">
+                        <Plus size={20} className="mr-2" />
+                        Nuevo Pedido
+                    </button>
+                </div>
+            </div>
+
+            {/* Production Modal */}
+            {showProductionModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowProductionModal(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-gray-900">Producción de Hoy</h3>
+                            <button onClick={() => setShowProductionModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <Plus size={24} className="rotate-45" />
+                            </button>
+                        </div>
+
+                        {productionData.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">No hay pedidos para hoy.</p>
+                        ) : (
+                            <ul className="space-y-4">
+                                {productionData.map((item, idx) => (
+                                    <li key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <span className="text-gray-700 font-medium text-lg">{item.name}</span>
+                                        <span className="bg-primary/20 text-primary px-3 py-1 rounded-lg font-black text-xl">
+                                            {item.total}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <div className="mt-8 pt-4 border-t border-gray-100">
+                            <button
+                                onClick={() => setShowProductionModal(false)}
+                                className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* TODAY */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 text-red-600 font-bold uppercase tracking-wider text-sm sticky top-0 bg-background z-10 py-2">
+                        <AlertCircle size={16} /> HOY ({todayOrders.length})
+                    </div>
+                    {todayOrders.length === 0 && <p className="text-gray-400 text-sm italic">Nada para hoy (¡Descanso merecido!)</p>}
+                    {todayOrders.map(order => (
+                        <OrderCard key={order.id} order={order} onComplete={() => handleComplete(order)} urgent />
+                    ))}
+                </section>
+
+                {/* TOMORROW */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 text-orange-600 font-bold uppercase tracking-wider text-sm sticky top-0 bg-background z-10 py-2">
+                        <Clock size={16} /> MAÑANA ({tomorrowOrders.length})
+                    </div>
+                    {tomorrowOrders.length === 0 && <p className="text-gray-400 text-sm italic">Sin entregas mañana.</p>}
+                    {tomorrowOrders.map(order => (
+                        <OrderCard key={order.id} order={order} onComplete={() => handleComplete(order)} />
+                    ))}
+                </section>
+
+                {/* FUTURE */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 text-gray-500 font-bold uppercase tracking-wider text-sm sticky top-0 bg-background z-10 py-2">
+                        <Calendar size={16} /> PRÓXIMOS
+                    </div>
+                    {futureOrders.map(order => (
+                        <OrderCard key={order.id} order={order} onComplete={() => handleComplete(order)} />
+                    ))}
+                </section>
+            </div>
+
+            <NewOrderModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={loadOrders} />
+        </div>
+    );
+};
+
+const OrderCard = ({ order, onComplete, urgent }) => {
+    const formattedTime = format(parseISO(order.delivery_date), 'h:mm a');
+    const displayDate = format(parseISO(order.delivery_date), "EEE d MMM", { locale: es });
+
+    // items usually stored as string in basic implementations if not careful, 
+    // but schema said jsonb, so api.js handles parsing?
+    // Supabase returns object automatically. Localstorage needs JSON.parse if stringified?
+    // Let's assume array of { product: "Name", quantity: 1 }
+
+    const items = Array.isArray(order.items) ? order.items : (JSON.parse(order.items || '[]'));
+
+    return (
+        <div className={`bg-white rounded-xl shadow-sm border-l-4 p-4 relative group transition-all hover:shadow-md ${urgent ? 'border-l-red-500' : 'border-l-blue-400'}`}>
+            <div className="flex justify-between items-start mb-2">
+                <div>
+                    <span className={`text-2xl font-black ${urgent ? 'text-red-600' : 'text-gray-800'}`}>{formattedTime}</span>
+                    {!urgent && <span className="text-xs text-gray-400 ml-2 uppercase font-bold">{displayDate}</span>}
+                </div>
+                {order.customers?.zone && (
+                    <div className="flex items-center text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                        <MapPin size={12} className="mr-1" />
+                        {order.customers.zone}
+                    </div>
+                )}
+            </div>
+
+            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{order.customers?.name || 'Cliente'}</h3>
+
+            <ul className="text-sm text-gray-600 space-y-1 my-3 border-t border-dashed border-gray-100 pt-2">
+                {items.map((item, idx) => (
+                    <li key={idx} className="flex justify-between">
+                        <span>{item.quantity}x {item.product}</span>
+                    </li>
+                ))}
+            </ul>
+
+            {order.notes && (
+                <div className="bg-yellow-50 text-yellow-800 text-xs p-2 rounded-lg mb-2 italic">
+                    "{order.notes}"
+                </div>
+            )}
+
+            <div className="flex justify-between items-center mt-4">
+                <div className="text-xs text-gray-400">
+                    Pendiente: <span className="font-bold text-gray-700">${Number(order.total_amount) - Number(order.prepayment || 0)}</span>
+                </div>
+                <button
+                    onClick={onComplete}
+                    className="flex items-center space-x-1 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-100 font-bold text-xs"
+                >
+                    <CheckCircle size={14} />
+                    <span>ENTREGAR</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default OrdersView;
