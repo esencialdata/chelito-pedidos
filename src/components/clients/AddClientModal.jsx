@@ -68,11 +68,15 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
                         onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
                     >
                         <option value="Sin Zona">Sin Zona / Recoge en Tienda</option>
-                        <option value="Centro">Zona Centro</option>
-                        <option value="Norte">Zona Norte (Juriquilla/Jurica)</option>
-                        <option value="Sur">Zona Sur (Centro Sur/Balaustradas)</option>
-                        <option value="Este">Zona Este (Milenio/El Refugio)</option>
-                        <option value="Oeste">Zona Oeste (Jardines/Tlacote)</option>
+                        <option value="Centro Histórico">Centro Histórico</option>
+                        <option value="Álamos / Carretas">Álamos / Carretas</option>
+                        <option value="Juriquilla">Juriquilla</option>
+                        <option value="El Refugio / Zibatá">El Refugio / Zibatá</option>
+                        <option value="Milenio III">Milenio III</option>
+                        <option value="El Pueblito">El Pueblito</option>
+                        <option value="Jardines de la Hacienda">Jardines de la Hacienda</option>
+                        <option value="Jurica">Jurica</option>
+                        <option value="Otra">Otra</option>
                     </select>
                 </div>
 

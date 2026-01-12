@@ -29,7 +29,7 @@ const ClientList = () => {
         ? clients
         : clients.filter(c => c.zone === selectedZone);
 
-    const zones = ['Todas', 'Centro', 'Norte', 'Sur', 'Este', 'Oeste', 'Sin Zona'];
+    const zones = ['Todas', 'Centro Histórico', 'Álamos / Carretas', 'Juriquilla', 'El Refugio / Zibatá', 'Milenio III', 'El Pueblito', 'Jardines de la Hacienda', 'Jurica', 'Otra', 'Sin Zona'];
 
     // Find most active zone
     const zoneCounts = clients.reduce((acc, client) => {
@@ -43,7 +43,7 @@ const ClientList = () => {
     if (loading) return <div className="p-8 text-center animate-pulse">Cargando clientes...</div>;
 
     return (
-        <div className="space-y-6 mb-20 max-w-7xl mx-auto">
+        <div className="space-y-6 mb-40 max-w-7xl mx-auto pb-32">
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-bold text-gray-900">Directorio de Clientes</h2>
@@ -148,16 +148,18 @@ const ClientCard = ({ client, onEdit }) => {
                         <span className="flex items-center">❤️ {client.favorite_product}</span>
                     ) : <span>Sin favorito aún</span>}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="p-2 bg-gray-50 text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                        className="p-3 bg-gray-50 text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                        aria-label="Editar cliente"
                     >
                         <Pencil size={20} />
                     </button>
                     <button
                         onClick={handleWhatsApp}
-                        className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+                        className="p-3 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+                        aria-label="Enviar WhatsApp"
                     >
                         <MessageCircle size={20} />
                     </button>
