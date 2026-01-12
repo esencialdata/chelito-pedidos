@@ -64,7 +64,7 @@ const Layout = ({ children, activeTab, setActiveTab, onTransactionAdded }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 bg-background min-h-screen">
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-28 md:pt-8 bg-background min-h-screen">
                 <div className="max-w-7xl mx-auto h-full">
                     {children}
                 </div>
