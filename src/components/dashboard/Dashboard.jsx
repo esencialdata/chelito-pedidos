@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import TransactionList from '../transactions/TransactionList';
 import ProductionPlanner from '../production/ProductionPlanner';
 
@@ -19,7 +19,8 @@ const Dashboard = ({ refreshTrigger }) => {
 
     const calculatePulse = async () => {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const todayStr = format(now, 'yyyy-MM-dd');
 
             const [txs, config, packaging] = await Promise.all([
                 api.transactions.list(),
@@ -27,11 +28,21 @@ const Dashboard = ({ refreshTrigger }) => {
                 api.packaging.list()
             ]);
 
+            // Debug Logging for User/Dev
+            console.log("Dashboard - Checking Dates:", { todayStr, totalTxs: txs.length });
+
             // Stock Alerts
             const alerts = packaging.filter(p => p.current_quantity <= p.min_alert);
             setStockAlerts(alerts);
 
-            const todayTxs = txs.filter(t => t.date.startsWith(today));
+            // Filter using isSameDay for robustness
+            const todayTxs = txs.filter(t => {
+                const txDate = new Date(t.date);
+                const isToday = isSameDay(txDate, now);
+                // console.log(`Tx ${t.id} (${t.date}): isToday=${isToday}`); // Uncomment for verbose debug
+                return isToday;
+            });
+            console.log("Found today transactions:", todayTxs.length);
 
             const income = todayTxs
                 .filter(t => t.type === 'VENTA')
