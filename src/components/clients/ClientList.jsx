@@ -29,7 +29,7 @@ const ClientList = () => {
         ? clients
         : clients.filter(c => c.zone === selectedZone);
 
-    const zones = ['Todas', 'Centro Histórico', 'Álamos / Carretas', 'Juriquilla', 'El Refugio / Zibatá', 'Milenio III', 'El Pueblito', 'Jardines de la Hacienda', 'Jurica', 'Otra', 'Sin Zona'];
+    const zones = ['Todas', 'Centro Histórico', 'Centro Sur', 'Álamos / Carretas', 'Juriquilla', 'El Refugio / Zibatá', 'Milenio III', 'El Pueblito', 'Jardines de la Hacienda', 'Jurica', 'Otra', 'Sin Zona'];
 
     // Find most active zone
     const zoneCounts = clients.reduce((acc, client) => {

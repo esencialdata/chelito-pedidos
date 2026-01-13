@@ -70,6 +70,7 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
                     >
                         <option value="Sin Zona">Sin Zona / Recoge en Tienda</option>
                         <option value="Centro Histórico">Centro Histórico</option>
+                        <option value="Centro Sur">Centro Sur</option>
                         <option value="Álamos / Carretas">Álamos / Carretas</option>
                         <option value="Juriquilla">Juriquilla</option>
                         <option value="El Refugio / Zibatá">El Refugio / Zibatá</option>
