@@ -94,10 +94,10 @@ const Layout = ({ children, activeTab, setActiveTab, onTransactionAdded }) => {
                         onClick={() => setActiveTab('orders')}
                     />
                     <NavButton
-                        icon={<BarChart3 size={24} />}
-                        label="Reportes"
-                        isActive={activeTab === 'reports'}
-                        onClick={() => setActiveTab('reports')}
+                        icon={<Users size={24} />}
+                        label="Clientes"
+                        isActive={activeTab === 'clients'}
+                        onClick={() => setActiveTab('clients')}
                     />
                     <NavButton
                         icon={<Package size={24} />}
