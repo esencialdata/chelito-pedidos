@@ -10,14 +10,15 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
         phone: '',
         category: 'Nuevo',
         favorite_product: '',
-        zone: 'Sin Zona'
+        zone: 'Sin Zona',
+        notes: ''
     });
 
     React.useEffect(() => {
         if (isOpen && initialData) {
             setFormData(initialData);
         } else if (isOpen) {
-            setFormData({ name: '', phone: '', category: 'Nuevo', favorite_product: '', zone: 'Sin Zona' });
+            setFormData({ name: '', phone: '', category: 'Nuevo', favorite_product: '', zone: 'Sin Zona', notes: '' });
         }
     }, [isOpen, initialData]);
 
@@ -33,7 +34,7 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
                 onClientAdded(newClient);
             }
             onClose();
-            setFormData({ name: '', phone: '', category: 'Nuevo', favorite_product: '', zone: 'Sin Zona' });
+            setFormData({ name: '', phone: '', category: 'Nuevo', favorite_product: '', zone: 'Sin Zona', notes: '' });
         } catch (error) {
             console.error('Error creating client:', error);
             alert('Error al guardar cliente');
@@ -93,6 +94,17 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Notas / Comentarios (Opcional)</label>
+                    <textarea
+                        rows={2}
+                        placeholder="Ej. Alergia a nueces, dejar en recepción..."
+                        className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
+                        value={formData.notes || ''}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    />
                 </div>
 
                 <div>

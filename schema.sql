@@ -9,6 +9,7 @@ create table customers (
   zone text, -- Norte, Sur, etc.
   category text default 'Nuevo', -- Nuevo, Frecuente, VIP
   favorite_product text,
+  notes text,
   total_orders integer default 0,
   total_purchased numeric(10,2) default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

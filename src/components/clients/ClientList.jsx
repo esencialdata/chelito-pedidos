@@ -141,6 +141,11 @@ const ClientCard = ({ client, onEdit }) => {
                     <span className="text-xs text-gray-400 font-medium mt-1">
                         📍 {client.zone || 'Sin Zona'} • {orders} Pedidos
                     </span>
+                    {client.notes && (
+                        <div className="mt-2 bg-yellow-50 p-2 rounded-lg text-xs text-yellow-800 border border-yellow-100 italic">
+                            📝 {client.notes}
+                        </div>
+                    )}
                 </div>
                 {/* Visual Category Star if manually set to VIP too */}
                 {client.category === 'VIP' && <Star size={20} className="text-yellow-400 fill-yellow-400 flex-shrink-0" />}
