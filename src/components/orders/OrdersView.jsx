@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { Calendar, CheckCircle, Clock, MapPin, Plus, AlertCircle, Pencil, Trash2 } from 'lucide-react';
-import { format, isToday, isTomorrow, parseISO, isAfter, startOfDay } from 'date-fns';
+import { format, isToday, isTomorrow, parseISO, isAfter, startOfDay, addDays, isBefore, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import NewOrderModal from './NewOrderModal';
 
@@ -84,11 +84,19 @@ const OrdersView = () => {
         setProductionPlan(null);
 
         try {
-            // 1. Summarize Products to Bake
+            // 1. Summarize Products to Bake (Today + 2 Days)
             const summary = {};
             const itemsToProcess = [];
+            const limitDate = addDays(startOfDay(new Date()), 2);
 
-            todayOrders.forEach(order => {
+            const productionOrders = orders.filter(o => {
+                const d = parseISO(o.delivery_date);
+                // Orders for today or future dates up to limitDate (inclusive)
+                return (isToday(d) || isAfter(d, startOfDay(new Date()))) &&
+                    (isBefore(d, limitDate) || isSameDay(d, limitDate));
+            });
+
+            productionOrders.forEach(order => {
                 const items = Array.isArray(order.items) ? order.items : (JSON.parse(order.items || '[]'));
                 items.forEach(item => {
                     const name = item.product || item.name;
@@ -189,7 +197,7 @@ const OrdersView = () => {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowProductionModal(false)}>
                     <div className="bg-white rounded-3xl w-full max-w-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 my-8" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-bold text-gray-900">Producción de Hoy</h3>
+                            <h3 className="text-2xl font-bold text-gray-900">Producción (Próx. 3 días)</h3>
                             <button onClick={() => setShowProductionModal(false)} className="text-gray-400 hover:text-gray-600">
                                 <Plus size={24} className="rotate-45" />
                             </button>
