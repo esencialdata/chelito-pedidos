@@ -527,11 +527,44 @@ export const api = {
         },
         create: async (item) => {
             if (supabase) {
+                // Check for duplicates first (Upsert logic)
+                const { data: existing } = await supabase
+                    .from('packaging_inventory')
+                    .select('id, current_quantity')
+                    .eq('type', item.type)
+                    .maybeSingle();
+
+                if (existing) {
+                    const newQty = Number(existing.current_quantity) + Number(item.current_quantity);
+                    const { data, error } = await supabase
+                        .from('packaging_inventory')
+                        .update({ current_quantity: newQty })
+                        .eq('id', existing.id)
+                        .select();
+                    if (error) throw error;
+                    return data[0];
+                }
+
                 const { data, error } = await supabase.from('packaging_inventory').insert(item).select();
                 if (error) throw error;
                 return data[0];
             }
             const current = getLocal(STORAGE_KEYS.PACKAGING);
+
+            // Local Duplicate Check
+            const existingIndex = current.findIndex(i => i.type === item.type);
+            if (existingIndex !== -1) {
+                const existing = current[existingIndex];
+                const updated = {
+                    ...existing,
+                    current_quantity: Number(existing.current_quantity) + Number(item.current_quantity),
+                    updated_at: new Date().toISOString()
+                };
+                current[existingIndex] = updated;
+                setLocal(STORAGE_KEYS.PACKAGING, current);
+                return updated;
+            }
+
             // new item
             const newItem = { ...item, id: crypto.randomUUID(), updated_at: new Date().toISOString() };
             setLocal(STORAGE_KEYS.PACKAGING, [...current, newItem]);

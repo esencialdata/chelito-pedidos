@@ -35,7 +35,24 @@ const Dashboard = ({ refreshTrigger }) => {
             console.log("Dashboard - Checking Dates:", { todayStr, totalTxs: txs.length });
 
             // Stock Alerts
-            const alerts = packaging.filter(p => Number(p.current_quantity) <= Number(p.min_alert));
+            // Stock Alerts - Aggregated by Name to handle duplicates
+            const aggregatedStock = packaging.reduce((acc, item) => {
+                const name = item.type.trim();
+                if (!acc[name]) {
+                    acc[name] = {
+                        ...item,
+                        current_quantity: 0,
+                        ids: []
+                    };
+                }
+                acc[name].current_quantity += Number(item.current_quantity);
+                acc[name].ids.push(item.id);
+                // Keep the max alert threshold found for safety, or just the first one
+                acc[name].min_alert = Math.max(Number(acc[name].min_alert), Number(item.min_alert));
+                return acc;
+            }, {});
+
+            const alerts = Object.values(aggregatedStock).filter(p => Number(p.current_quantity) <= Number(p.min_alert));
             setStockAlerts(alerts);
 
             // Filter using isSameDay for robustness
