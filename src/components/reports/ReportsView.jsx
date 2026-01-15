@@ -3,6 +3,7 @@ import { api } from '../../services/api';
 import BalanceSummary from './BalanceSummary';
 import ExpenseBreakdown from './ExpenseBreakdown';
 import InflationTracker from './InflationTracker';
+import ProfitabilityRanking from './ProfitabilityRanking';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { TrendingUp, PieChart, AlertTriangle } from 'lucide-react';
 
@@ -68,14 +69,15 @@ const ReportsView = () => {
                 />
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Grid for Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 2. Desglose de Gastos */}
                 <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                             <PieChart size={20} />
                         </div>
-                        <h2 className="font-bold text-gray-900">Desglose de Gastos</h2>
+                        <h2 className="font-bold text-gray-900">Gastos</h2>
                     </div>
                     <ExpenseBreakdown transactions={filteredTransactions} />
                 </section>
@@ -86,9 +88,20 @@ const ReportsView = () => {
                         <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
                             <AlertTriangle size={20} />
                         </div>
-                        <h2 className="font-bold text-gray-900">Variación de Precios</h2>
+                        <h2 className="font-bold text-gray-900">Variación Precios</h2>
                     </div>
                     <InflationTracker supplies={supplies} />
+                </section>
+
+                {/* 4. Profitability Ranking - NEW */}
+                <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
+                            <TrendingUp size={20} />
+                        </div>
+                        <h2 className="font-bold text-gray-900">Top Rentabilidad</h2>
+                    </div>
+                    <ProfitabilityRanking />
                 </section>
             </div>
         </div>

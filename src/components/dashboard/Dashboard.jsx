@@ -5,6 +5,8 @@ import { cn } from '../../lib/utils';
 import { format, isSameDay } from 'date-fns';
 import TransactionList from '../transactions/TransactionList';
 import ProductionPlanner from '../production/ProductionPlanner';
+import ClosingChecklistModal from './ClosingChecklistModal';
+import { CheckCircle } from 'lucide-react';
 
 const Dashboard = ({ refreshTrigger }) => {
     const [metrics, setMetrics] = useState({
@@ -16,6 +18,7 @@ const Dashboard = ({ refreshTrigger }) => {
     });
     const [loading, setLoading] = useState(true);
     const [stockAlerts, setStockAlerts] = useState([]);
+    const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
 
     const calculatePulse = async () => {
         try {
@@ -207,6 +210,27 @@ const Dashboard = ({ refreshTrigger }) => {
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Actividad Reciente</h3>
                 <TransactionList limit={5} refreshTrigger={refreshTrigger} />
             </div>
+
+            {/* Closing Checklist Trigger */}
+            <div className="flex justify-start md:justify-end pt-4 pb-24 md:pb-8">
+                <button
+                    onClick={() => setIsClosingModalOpen(true)}
+                    className="group bg-white border border-gray-200 hover:border-green-500 hover:shadow-lg transition-all p-4 rounded-2xl flex items-center gap-4"
+                >
+                    <div className="bg-green-100 text-green-600 p-3 rounded-xl group-hover:scale-110 transition-transform">
+                        <CheckCircle size={24} />
+                    </div>
+                    <div className="text-left">
+                        <p className="font-bold text-gray-900">Rutina de Cierre</p>
+                        <p className="text-xs text-gray-500 group-hover:text-green-600">Finalizar turno correctamente</p>
+                    </div>
+                </button>
+            </div>
+
+            <ClosingChecklistModal
+                isOpen={isClosingModalOpen}
+                onClose={() => setIsClosingModalOpen(false)}
+            />
         </div>
     );
 };

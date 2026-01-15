@@ -293,7 +293,36 @@ export const api = {
         },
         updatePrice: async (id, newPrice) => {
             if (supabase) {
-                const { data, error } = await supabase.from('supplies').update({ current_cost: newPrice }).eq('id', id).select();
+                // 1. Fetch current data to get history
+                const { data: current, error: fetchError } = await supabase
+                    .from('supplies')
+                    .select('current_cost, history')
+                    .eq('id', id)
+                    .single();
+
+                if (fetchError) throw fetchError;
+
+                // 2. Prepare updates
+                const updates = { current_cost: newPrice };
+
+                // Only update history if price actually changed
+                if (Number(current.current_cost) !== Number(newPrice)) {
+                    const newHistoryItem = {
+                        price: Number(newPrice),
+                        date: new Date().toISOString()
+                    };
+                    // Ensure history is an array
+                    const currentHistory = Array.isArray(current.history) ? current.history : [];
+                    updates.history = [newHistoryItem, ...currentHistory];
+                }
+
+                // 3. Perform Update
+                const { data, error } = await supabase
+                    .from('supplies')
+                    .update(updates)
+                    .eq('id', id)
+                    .select();
+
                 if (error) throw error;
                 return data[0];
             }

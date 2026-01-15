@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { Plus, Package, TrendingUp, TrendingDown, Minus, Layers, Pencil } from 'lucide-react';
 import Modal from '../ui/Modal';
+import WasteReportModal from './WasteReportModal';
 
 
 const SupplyList = () => {
     const [supplies, setSupplies] = useState([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+    const [isWasteModalOpen, setIsWasteModalOpen] = useState(false);
     const [selectedSupply, setSelectedSupply] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -66,13 +68,21 @@ const SupplyList = () => {
                     <h3 className="text-xl font-bold text-gray-900">Insumos y Materia Prima</h3>
                     <p className="text-gray-500 text-sm">Controla el costo y stock de tus ingredientes</p>
                 </div>
-                <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center"
-                >
-                    <Plus size={16} className="mr-2" />
-                    Nuevo Ingrediente (Catálogo)
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsWasteModalOpen(true)}
+                        className="bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-red-100 transition-colors flex items-center"
+                    >
+                        🚨 Reportar Merma
+                    </button>
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center"
+                    >
+                        <Plus size={16} className="mr-2" />
+                        Nuevo Ingrediente
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -143,6 +153,12 @@ const SupplyList = () => {
                 isOpen={isAdjustModalOpen}
                 onClose={() => setIsAdjustModalOpen(false)}
                 supply={selectedSupply}
+                onSuccess={loadSupplies}
+            />
+
+            <WasteReportModal
+                isOpen={isWasteModalOpen}
+                onClose={() => setIsWasteModalOpen(false)}
                 onSuccess={loadSupplies}
             />
         </div>
