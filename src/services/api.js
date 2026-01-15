@@ -360,7 +360,16 @@ export const api = {
                                 price: Number(upgrades.current_cost),
                                 date: new Date().toISOString()
                             };
-                            const currentHistory = Array.isArray(current.history) ? current.history : [];
+                            let currentHistory = Array.isArray(current.history) ? current.history : [];
+
+                            // BACKFILL FIX: If history is empty, save the OLD price as a historical point
+                            if (currentHistory.length === 0 && current.current_cost) {
+                                currentHistory = [{
+                                    price: Number(current.current_cost),
+                                    date: new Date(Date.now() - 1000).toISOString()
+                                }];
+                            }
+
                             // Add to history
                             finalUpdates.history = [newHistoryItem, ...currentHistory];
                         }
@@ -385,7 +394,16 @@ export const api = {
                         price: Number(upgrades.current_cost),
                         date: new Date().toISOString()
                     };
-                    const history = Array.isArray(oldSupply.history) ? oldSupply.history : [];
+                    let history = Array.isArray(oldSupply.history) ? oldSupply.history : [];
+
+                    // BACKFILL FIX LOCAL
+                    if (history.length === 0 && oldSupply.current_cost) {
+                        history = [{
+                            price: Number(oldSupply.current_cost),
+                            date: new Date(Date.now() - 1000).toISOString()
+                        }];
+                    }
+
                     updated.history = [newHistoryItem, ...history];
                 }
 
