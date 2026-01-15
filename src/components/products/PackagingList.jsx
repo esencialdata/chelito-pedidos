@@ -256,6 +256,21 @@ const AddPackagingModal = ({ isOpen, onClose, onSaved, initialData }) => {
                 >
                     Guardar Inventario
                 </button>
+
+                {initialData && (
+                    <button
+                        onClick={async () => {
+                            if (confirm('¿Estás seguro de eliminar este empaque?')) {
+                                await api.packaging.delete(initialData.id);
+                                onSaved();
+                                onClose();
+                            }
+                        }}
+                        className="w-full text-red-500 py-3 font-bold hover:bg-red-50 rounded-xl transition-colors mt-2"
+                    >
+                        Eliminar Empaque
+                    </button>
+                )}
             </div>
         </Modal>
     );

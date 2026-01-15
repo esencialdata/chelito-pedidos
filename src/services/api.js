@@ -412,6 +412,16 @@ export const api = {
                 return updated;
             }
             return null;
+        },
+        delete: async (id) => {
+            if (supabase) {
+                const { error } = await supabase.from('supplies').delete().eq('id', id);
+                if (error) throw error;
+                return true;
+            }
+            const current = getLocal('bakery_supplies');
+            setLocal('bakery_supplies', current.filter(s => s.id !== id));
+            return true;
         }
     },
     recipes: {
@@ -585,6 +595,16 @@ export const api = {
                 return updated;
             }
             return null;
+        },
+        delete: async (id) => {
+            if (supabase) {
+                const { error } = await supabase.from('packaging_inventory').delete().eq('id', id);
+                if (error) throw error;
+                return true;
+            }
+            const current = getLocal(STORAGE_KEYS.PACKAGING);
+            setLocal(STORAGE_KEYS.PACKAGING, current.filter(i => i.id !== id));
+            return true;
         }
     },
     orders: {

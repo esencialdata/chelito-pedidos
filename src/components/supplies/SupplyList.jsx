@@ -286,6 +286,22 @@ const AddSupplyModal = ({ isOpen, onClose, onSuccess, initialData }) => {
                 >
                     {loading ? 'Guardando...' : (initialData ? 'Guardar Cambios' : 'Crear en Catálogo')}
                 </button>
+
+                {initialData && (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            if (confirm('¿Estás seguro de eliminar este insumo?')) {
+                                setLoading(true);
+                                await api.supplies.delete(initialData.id);
+                                onSuccess();
+                            }
+                        }}
+                        className="w-full text-red-500 py-3 font-bold hover:bg-red-50 rounded-xl transition-colors"
+                    >
+                        Eliminar Insumo
+                    </button>
+                )}
             </form>
         </Modal>
     );
