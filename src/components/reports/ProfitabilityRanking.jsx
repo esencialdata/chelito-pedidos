@@ -46,20 +46,21 @@ const ProfitabilityRanking = () => {
                 </h4>
                 <div className="space-y-2">
                     {top3.map((p, idx) => (
-                        <div key={p.id} className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-white border border-yellow-100 rounded-xl relative overflow-hidden group">
+                        <div key={p.id} className="flex justify-between items-center p-3 bg-gradient-to-r from-yellow-50 to-white border border-yellow-100 rounded-xl relative overflow-hidden">
                             <div className="flex items-center gap-3 relative z-10">
-                                <div className="w-6 h-6 rounded-full bg-yellow-200 text-yellow-700 flex items-center justify-center text-xs font-black">
+                                <div className="w-6 h-6 rounded-full bg-yellow-200 text-yellow-700 flex items-center justify-center text-xs font-black shrink-0">
                                     {idx + 1}
                                 </div>
-                                <span className="font-bold text-gray-800">{p.name}</span>
+                                <div className="min-w-0">
+                                    <span className="font-bold text-gray-800 block truncate leading-tight">{p.name}</span>
+                                    <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-md inline-block mt-1">
+                                        +${p.profit.toFixed(2)}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="text-right relative z-10">
-                                <span className="block font-black text-green-600 text-lg">{p.margin.toFixed(0)}%</span>
-                                <span className="block text-[10px] text-gray-400 uppercase font-bold">Margen</span>
-                            </div>
-                            {/* Hover detail */}
-                            <div className="absolute inset-0 bg-white/95 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-xs font-bold text-gray-600">Ganas ${p.profit.toFixed(2)} por venta</span>
+                            <div className="text-right relative z-10 pl-2 shrink-0">
+                                <span className="block font-black text-green-600 text-lg leading-tight">{p.margin.toFixed(0)}%</span>
+                                <span className="block text-[9px] text-gray-400 uppercase font-bold tracking-wide">Margen</span>
                             </div>
                         </div>
                     ))}
