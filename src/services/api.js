@@ -343,9 +343,55 @@ export const api = {
         },
         update: async (id, upgrades) => {
             if (supabase) {
-                const { data, error } = await supabase.from('supplies').update(upgrades).eq('id', id).select();
+                // 1. Fetch current if price is changing to track history
+                let finalUpdates = { ...upgrades };
+
+                if (upgrades.current_cost !== undefined) {
+                    const { data: current, error: fetchError } = await supabase
+                        .from('supplies')
+                        .select('current_cost, history')
+                        .eq('id', id)
+                        .single();
+
+                    if (!fetchError && current) {
+                        // Only update history if price actually changed
+                        if (Number(current.current_cost) !== Number(upgrades.current_cost)) {
+                            const newHistoryItem = {
+                                price: Number(upgrades.current_cost),
+                                date: new Date().toISOString()
+                            };
+                            const currentHistory = Array.isArray(current.history) ? current.history : [];
+                            // Add to history
+                            finalUpdates.history = [newHistoryItem, ...currentHistory];
+                        }
+                    }
+                }
+
+                const { data, error } = await supabase.from('supplies').update(finalUpdates).eq('id', id).select();
                 if (error) throw error;
                 return data[0];
+            }
+
+            // Local Storage Fallback
+            const current = getLocal('bakery_supplies');
+            const index = current.findIndex(s => s.id === id);
+            if (index !== -1) {
+                const oldSupply = current[index];
+                let updated = { ...oldSupply, ...upgrades };
+
+                // Track history locally
+                if (upgrades.current_cost !== undefined && Number(oldSupply.current_cost) !== Number(upgrades.current_cost)) {
+                    const newHistoryItem = {
+                        price: Number(upgrades.current_cost),
+                        date: new Date().toISOString()
+                    };
+                    const history = Array.isArray(oldSupply.history) ? oldSupply.history : [];
+                    updated.history = [newHistoryItem, ...history];
+                }
+
+                current[index] = updated;
+                setLocal('bakery_supplies', current);
+                return updated;
             }
             return null;
         }
