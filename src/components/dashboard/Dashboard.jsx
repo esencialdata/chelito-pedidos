@@ -35,7 +35,7 @@ const Dashboard = ({ refreshTrigger }) => {
             console.log("Dashboard - Checking Dates:", { todayStr, totalTxs: txs.length });
 
             // Stock Alerts
-            const alerts = packaging.filter(p => p.current_quantity <= p.min_alert);
+            const alerts = packaging.filter(p => Number(p.current_quantity) <= Number(p.min_alert));
             setStockAlerts(alerts);
 
             // Filter using isSameDay for robustness

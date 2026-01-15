@@ -54,13 +54,13 @@ const PackagingList = () => {
                             <div>
                                 <h4 className="font-bold text-gray-800 text-lg">{item.type}</h4>
                                 <div className="mt-2 flex items-baseline gap-1">
-                                    <span className={`text-2xl font-black ${item.current_quantity <= item.min_alert ? 'text-red-500' : 'text-gray-900'}`}>
+                                    <span className={`text-2xl font-black ${Number(item.current_quantity) <= Number(item.min_alert) ? 'text-red-500' : 'text-gray-900'}`}>
                                         {item.current_quantity}
                                     </span>
                                     <span className="text-sm text-gray-400">unid.</span>
                                 </div>
                             </div>
-                            {item.current_quantity <= item.min_alert && (
+                            {Number(item.current_quantity) <= Number(item.min_alert) && (
                                 <div className="bg-red-50 text-red-500 p-2 rounded-full animate-pulse" title="Stock Bajo">
                                     <AlertTriangle size={20} />
                                 </div>
