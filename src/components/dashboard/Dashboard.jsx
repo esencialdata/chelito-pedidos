@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, subDays } from 'date-fns';
 import TransactionList from '../transactions/TransactionList';
 import ProductionPlanner from '../production/ProductionPlanner';
 import ClosingChecklistModal from './ClosingChecklistModal';
@@ -77,13 +77,43 @@ const Dashboard = ({ refreshTrigger }) => {
 
             const percent = target > 0 ? (income / target) * 100 : (income > 0 ? 100 : 0);
 
+            // Calculate Yesterday's Income for Trend
+            const yesterday = subDays(now, 1);
+            const yesterdayTxs = txs.filter(t => isSameDay(new Date(t.date), yesterday));
+            const yesterdayIncome = yesterdayTxs
+                .filter(t => t.type === 'VENTA')
+                .reduce((sum, t) => sum + Number(t.amount), 0);
+
+            // Calculate Trend Percentage
+            let trendPercentage = 0;
+            let trendText = "vs ayer";
+            let trendUp = true;
+
+            if (yesterdayIncome === 0) {
+                if (income > 0) {
+                    trendPercentage = 100;
+                    trendText = "+100% vs ayer";
+                    trendUp = true;
+                } else {
+                    trendText = "Sin cambios";
+                    trendUp = true; // Neutral
+                }
+            } else {
+                trendPercentage = ((income - yesterdayIncome) / yesterdayIncome) * 100;
+                const sign = trendPercentage > 0 ? "+" : "";
+                trendText = `${sign}${trendPercentage.toFixed(0)}% vs ayer`;
+                trendUp = trendPercentage >= 0;
+            }
+
             setMetrics({
                 income,
                 expenses: variableExpenses,
                 goal: target,
-                percent: Math.min(percent, 100), // Cap for bar width, but value can be higher
+                percent: Math.min(percent, 100), // Cap for bar width
                 rawValue: percent,
-                isProfit: percent >= 100
+                isProfit: percent >= 100,
+                salesTrend: trendText,
+                salesTrendUp: trendUp
             });
         } catch (e) {
             console.error(e);
@@ -167,8 +197,8 @@ const Dashboard = ({ refreshTrigger }) => {
                     <StatCard
                         title="Ventas Totales"
                         value={`$${metrics.income.toFixed(2)}`}
-                        trend="+12% vs ayer"
-                        trendUp={true}
+                        trend={metrics.salesTrend || "Calculando..."}
+                        trendUp={metrics.salesTrendUp}
                         icon={<DollarSign className="text-yellow-600" size={24} />}
                         bg="bg-yellow-50"
                     />
