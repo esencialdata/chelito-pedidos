@@ -95,11 +95,18 @@ const AddTransactionModal = ({ isOpen, onClose, type, onSuccess }) => {
                 const totalAmount = Number(amount);
                 const newUnitCost = totalAmount / qty;
 
-                // Update Price First (triggers history)
-                await api.supplies.update(selectedSupplyId, { current_cost: newUnitCost });
+                // Find the current supply to get proper stock baseline
+                const currentSupply = supplies.find(s => String(s.id) === String(selectedSupplyId));
+                const currentStock = Number(currentSupply?.current_stock || 0);
+                const newStock = currentStock + qty;
 
-                // Then Update Stock
-                await api.supplies.updateStock(selectedSupplyId, qty);
+                console.log(`Updating Supply ${selectedSupplyId}: Cost ${newUnitCost}, Stock ${newStock} (+${qty})`);
+
+                // Perform ONE update for both Price and Stock to ensure consistency
+                await api.supplies.update(selectedSupplyId, {
+                    current_cost: newUnitCost,
+                    current_stock: newStock
+                });
             }
 
             setAmount('');
