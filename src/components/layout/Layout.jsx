@@ -100,6 +100,12 @@ const Layout = ({ children, activeTab, setActiveTab, onTransactionAdded }) => {
                         onClick={() => setActiveTab('orders')}
                     />
                     <NavButton
+                        icon={<ChefHat size={24} />}
+                        label="Producción"
+                        isActive={activeTab === 'production'}
+                        onClick={() => setActiveTab('production')}
+                    />
+                    <NavButton
                         icon={<Users size={24} />}
                         label="Clientes"
                         isActive={activeTab === 'clients'}
