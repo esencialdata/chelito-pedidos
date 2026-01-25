@@ -157,18 +157,18 @@ const ProductionView = () => {
         }
     };
 
-    if (loading) return <div className="p-10 text-white text-center">Cargando centro de control...</div>;
+    if (loading) return <div className="p-10 text-gray-500 text-center">Cargando centro de control...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white pb-32">
+        <div className="min-h-screen bg-gray-50 pb-32">
             {/* Header */}
-            <div className="bg-gray-800 p-6 shadow-lg border-b border-gray-700 flex justify-between items-center sticky top-0 z-10">
+            <div className="bg-white p-6 shadow-sm border-b border-gray-100 flex justify-between items-center sticky top-0 z-10">
                 <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-3 text-orange-400">
-                        <ChefHat className="w-8 h-8" />
+                    <h1 className="text-3xl font-bold flex items-center gap-3 text-gray-900">
+                        <ChefHat className="w-8 h-8 text-primary" />
                         Centro de Producción
                     </h1>
-                    <p className="text-gray-400 text-sm mt-1">Gestión de horneado y control de insumos</p>
+                    <p className="text-gray-500 text-sm mt-1">Gestión de horneado y control de insumos</p>
                 </div>
 
                 <div className="flex gap-4">
@@ -179,7 +179,7 @@ const ProductionView = () => {
                     )}
                     <button
                         onClick={loadSuggestions}
-                        className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-xl transition-all border border-gray-600"
+                        className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-5 py-3 rounded-xl transition-all border border-gray-200 shadow-sm"
                     >
                         <RefreshCw size={18} />
                         Cargar Pedidos Pendientes
@@ -191,7 +191,7 @@ const ProductionView = () => {
 
                 {/* Empty State */}
                 {products.length === 0 && (
-                    <div className="text-center py-20 text-gray-500">
+                    <div className="text-center py-20 text-gray-400">
                         No hay productos activos configurados.
                     </div>
                 )}
@@ -203,29 +203,29 @@ const ProductionView = () => {
                         const hasRecipe = recipes[product.id] && recipes[product.id].length > 0;
 
                         return (
-                            <div key={product.id} className={`bg-gray-800 rounded-2xl p-6 border transition-all ${qty > 0 ? 'border-orange-500 shadow-orange-500/10 shadow-lg' : 'border-gray-700 shadow-md'}`}>
+                            <div key={product.id} className={`bg-white rounded-2xl p-6 border transition-all ${qty > 0 ? 'border-primary ring-2 ring-primary/20 shadow-lg' : 'border-gray-100 shadow-sm'}`}>
                                 <div className="flex justify-between items-start mb-4">
-                                    <h3 className="font-bold text-lg text-gray-100 leading-tight">{product.name}</h3>
+                                    <h3 className="font-bold text-lg text-gray-900 leading-tight">{product.name}</h3>
                                     {!hasRecipe && (
-                                        <span className="text-xs text-red-400 bg-red-400/10 px-2 py-1 rounded" title="Sin receta configurada">
+                                        <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded" title="Sin receta configurada">
                                             No Link
                                         </span>
                                     )}
                                 </div>
 
-                                <div className="flex items-center justify-between bg-gray-900 rounded-xl p-1 gap-2">
+                                <div className="flex items-center justify-between bg-gray-50 rounded-xl p-1 gap-2">
                                     <button
                                         onClick={() => handleQuantityChange(product.id, -1)}
-                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors text-2xl font-bold"
+                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-white rounded-lg transition-all text-2xl font-bold"
                                     >
                                         -
                                     </button>
-                                    <span className={`text-2xl font-bold font-mono ${qty > 0 ? 'text-orange-400' : 'text-gray-600'}`}>
+                                    <span className={`text-2xl font-bold font-mono ${qty > 0 ? 'text-primary' : 'text-gray-400'}`}>
                                         {qty}
                                     </span>
                                     <button
                                         onClick={() => handleQuantityChange(product.id, 1)}
-                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors text-2xl font-bold"
+                                        className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-white rounded-lg transition-all text-2xl font-bold"
                                     >
                                         +
                                     </button>
@@ -233,17 +233,17 @@ const ProductionView = () => {
 
                                 {/* Micro-interaction: Ingredient Preview */}
                                 {qty > 0 && hasRecipe && (
-                                    <div className="mt-4 pt-3 border-t border-gray-700">
-                                        <p className="text-xs text-gray-500 mb-1">Impacto estimado:</p>
+                                    <div className="mt-4 pt-3 border-t border-gray-100">
+                                        <p className="text-xs text-gray-400 mb-1">Impacto estimado:</p>
                                         <div className="space-y-1">
                                             {recipes[product.id].slice(0, 2).map((ing, idx) => (
-                                                <div key={idx} className="flex justify-between text-xs text-gray-400">
+                                                <div key={idx} className="flex justify-between text-xs text-gray-500">
                                                     <span>{ing.supply?.name}</span>
-                                                    <span className="text-gray-300">{(Number(ing.quantity) * qty).toFixed(2)} {ing.unit}</span>
+                                                    <span className="text-gray-700 font-medium">{(Number(ing.quantity) * qty).toFixed(2)} {ing.unit}</span>
                                                 </div>
                                             ))}
                                             {recipes[product.id].length > 2 && (
-                                                <p className="text-xs text-gray-600 italic">+ {recipes[product.id].length - 2} más...</p>
+                                                <p className="text-xs text-gray-400 italic">+ {recipes[product.id].length - 2} más...</p>
                                             )}
                                         </div>
                                     </div>
@@ -256,25 +256,25 @@ const ProductionView = () => {
 
             {/* Footer / Summary Panel - Modified to be always visible if items selected */}
             {Object.keys(productionQuantities).length > 0 && (
-                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-20 animate-slide-up">
+                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 animate-slide-up">
                     <div className="max-w-7xl mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 items-center justify-between">
 
                         {/* Summary Stats */}
                         <div className="flex-1 w-full">
-                            <div className="flex items-center gap-2 mb-2 text-gray-400 text-sm uppercase tracking-wider font-semibold">
+                            <div className="flex items-center gap-2 mb-2 text-gray-500 text-sm uppercase tracking-wider font-semibold">
                                 <Package size={16} /> Resumen de Insumos
                             </div>
                             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                                 {ingredientImpact.slice(0, 5).map((ing, i) => (
-                                    <div key={i} className="bg-gray-900 px-4 py-2 rounded-lg border border-gray-700 min-w-[140px]">
+                                    <div key={i} className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 min-w-[140px]">
                                         <div className="text-xs text-gray-500 truncate">{ing.name}</div>
-                                        <div className="text-orange-400 font-mono font-bold">
-                                            -{ing.quantity.toFixed(1)} <span className="text-xs text-gray-600">{ing.unit}</span>
+                                        <div className="text-primary font-mono font-bold">
+                                            -{ing.quantity.toFixed(1)} <span className="text-xs text-gray-400">{ing.unit}</span>
                                         </div>
                                     </div>
                                 ))}
                                 {ingredientImpact.length > 5 && (
-                                    <div className="flex items-center justify-center px-4 text-gray-500 text-xs">
+                                    <div className="flex items-center justify-center px-4 text-gray-400 text-xs">
                                         + {ingredientImpact.length - 5} más
                                     </div>
                                 )}
@@ -285,14 +285,14 @@ const ProductionView = () => {
                         <div className="flex gap-4 w-full md:w-auto">
                             <button
                                 onClick={() => setProductionQuantities({})}
-                                className="px-6 py-4 rounded-xl text-gray-400 hover:text-white font-medium transition-colors"
+                                className="px-6 py-4 rounded-xl text-gray-500 hover:text-gray-900 font-medium transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleConfirmProduction}
                                 disabled={submitting}
-                                className="flex-1 md:flex-none px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                                className="flex-1 md:flex-none px-8 py-4 bg-primary hover:bg-yellow-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 flex items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                             >
                                 {submitting ? 'Procesando...' : 'CONFIRMAR TANDA'}
                                 <ArrowRight size={20} />
