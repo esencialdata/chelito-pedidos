@@ -256,7 +256,7 @@ const ProductionView = () => {
 
             {/* Footer / Summary Panel - Modified to be always visible if items selected */}
             {Object.keys(productionQuantities).length > 0 && (
-                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 animate-slide-up">
+                <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-64 bg-white border-t border-gray-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 animate-slide-up">
                     <div className="max-w-7xl mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 items-center justify-between">
 
                         {/* Summary Stats */}
