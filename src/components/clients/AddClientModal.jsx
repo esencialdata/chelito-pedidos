@@ -78,6 +78,8 @@ const AddClientModal = ({ isOpen, onClose, onClientAdded, initialData = null }) 
                         <option value="El Pueblito">El Pueblito</option>
                         <option value="Jardines de la Hacienda">Jardines de la Hacienda</option>
                         <option value="Jurica">Jurica</option>
+                        <option value="Pie de la cuesta / UTEQ">Pie de la cuesta / UTEQ</option>
+                        <option value="Sendero">Sendero</option>
                         <option value="Otra">Otra</option>
                     </select>
                 </div>
