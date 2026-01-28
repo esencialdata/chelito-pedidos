@@ -665,41 +665,6 @@ export const api = {
             return newOrder;
         },
         complete: async (orderId, totalCollected, transactionData) => {
-            // Deduct Packaging Logic (Simple Heuristic)
-            try {
-                // 1. Get Order Items
-                let items = [];
-                if (supabase) {
-                    const { data } = await supabase.from('orders').select('items').eq('id', orderId).single();
-                    if (data) items = Array.isArray(data.items) ? data.items : JSON.parse(data.items || '[]');
-                } else {
-                    const orders = getLocal('bakery_orders');
-                    const order = orders.find(o => o.id === orderId);
-                    if (order) items = Array.isArray(order.items) ? order.items : (order.items || []);
-                }
-
-                // 2. Get Packaging
-                const packagingList = await api.packaging.list();
-
-                // 3. Deduct (1 item = 1 unit of "Caja" or "Bolsa" found, preferring match)
-                for (const item of items) {
-                    const qty = Number(item.quantity);
-                    // Find best match: name contains product name? or just "Caja"
-                    let match = packagingList.find(p => p.type.toLowerCase().includes(item.product.toLowerCase()));
-                    if (!match) match = packagingList.find(p => p.type.toLowerCase().includes('caja') && p.current_quantity > 0);
-                    if (!match) match = packagingList.find(p => p.type.toLowerCase().includes('bolsa') && p.current_quantity > 0);
-
-                    if (match) {
-                        const newQty = Math.max(0, match.current_quantity - qty);
-                        await api.packaging.update(match.id, { current_quantity: newQty });
-                        // Update local list reference to avoid double decrement on stale data if loop continues
-                        match.current_quantity = newQty;
-                    }
-                }
-            } catch (err) {
-                console.error("Error deducting packaging", err);
-                // Continue flow even if deduction fails
-            }
 
             if (supabase) {
                 const { error: orderError } = await supabase.from('orders').update({ status: 'ENTREGADO' }).eq('id', orderId);
